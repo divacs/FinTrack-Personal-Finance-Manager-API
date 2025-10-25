@@ -1,6 +1,0 @@
-@FinTrack___Personal_Finance_Manager_API_HostAddress = http://localhost:5099
-
-GET {{FinTrack___Personal_Finance_Manager_API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

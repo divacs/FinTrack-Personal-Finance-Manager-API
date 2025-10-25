@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace FinTrack___Personal_Finance_Manager_API.Controllers
+namespace FinTrack.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]

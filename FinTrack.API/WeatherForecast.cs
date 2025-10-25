@@ -1,4 +1,4 @@
-namespace FinTrack___Personal_Finance_Manager_API
+namespace FinTrack.API
 {
     public class WeatherForecast
     {

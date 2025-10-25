@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36121.58 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.API", "FinTrack – Personal Finance Manager API\FinTrack.API.csproj", "{AF042BC4-C598-4FFE-B924-E9149993B14E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.Domain", "FinTrack.Domain\FinTrack.Domain.csproj", "{FAFFC88B-EA37-491F-A792-8871AB55977E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.Application", "FinTrack.Application\FinTrack.Application.csproj", "{99D57797-F2F0-45E4-833A-D625CA43B64F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.Infrastructure", "FinTrack.Infrastructure\FinTrack.Infrastructure.csproj", "{142F03E8-626C-4628-A46A-9055C2831EB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.API", "FinTrack.API\FinTrack.API.csproj", "{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AF042BC4-C598-4FFE-B924-E9149993B14E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AF042BC4-C598-4FFE-B924-E9149993B14E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AF042BC4-C598-4FFE-B924-E9149993B14E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AF042BC4-C598-4FFE-B924-E9149993B14E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FAFFC88B-EA37-491F-A792-8871AB55977E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FAFFC88B-EA37-491F-A792-8871AB55977E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAFFC88B-EA37-491F-A792-8871AB55977E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -33,6 +29,10 @@ Global
 		{142F03E8-626C-4628-A46A-9055C2831EB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{142F03E8-626C-4628-A46A-9055C2831EB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{142F03E8-626C-4628-A46A-9055C2831EB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
