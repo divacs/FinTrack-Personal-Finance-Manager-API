@@ -1,14 +1,11 @@
 ﻿using FinTrack.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Transactions;
 using Transaction = FinTrack.Domain.Entities.Transaction;
 
 namespace FinTrack.Infrastructure.Data
 {
-    /// <summary>
-    /// Application database context integrating ASP.NET Identity and domain entities.
-    /// </summary>
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -16,7 +13,6 @@ namespace FinTrack.Infrastructure.Data
         {
         }
 
-        // Domain entities
         public DbSet<BankAccount> BankAccounts { get; set; } = null!;
         public DbSet<Transaction> Transactions { get; set; } = null!;
         public DbSet<Category> Categories { get; set; } = null!;
@@ -27,7 +23,136 @@ namespace FinTrack.Infrastructure.Data
         {
             base.OnModelCreating(builder);
 
-            // Fluent API relationships & constraints
+            // ------------------------
+            // Seed Users
+            // ------------------------
+            var hasher = new PasswordHasher<ApplicationUser>();
+            var demoUser = new ApplicationUser
+            {
+                Id = "seed-user-001",
+                UserName = "demo@fintrack.com",
+                NormalizedUserName = "DEMO@FINTRACK.COM",
+                Email = "demo@fintrack.com",
+                NormalizedEmail = "DEMO@FINTRACK.COM",
+                EmailConfirmed = true,
+                FirstName = "Demo",
+                LastName = "User",
+                PreferredCurrency = "USD",
+                MonthlyIncome = 3000
+            };
+            demoUser.PasswordHash = hasher.HashPassword(demoUser, "Demo123!");
+            builder.Entity<ApplicationUser>().HasData(demoUser);
+
+            // ------------------------
+            // Seed Categories
+            // ------------------------
+            builder.Entity<Category>().HasData(
+                new Category { Id = 1, Name = "Groceries", ColorHex = "#FFB74D" },
+                new Category { Id = 2, Name = "Utilities", ColorHex = "#4FC3F7" },
+                new Category { Id = 3, Name = "Entertainment", ColorHex = "#BA68C8" },
+                new Category { Id = 4, Name = "Transportation", ColorHex = "#81C784" },
+                new Category { Id = 5, Name = "Salary", ColorHex = "#FFD54F" }
+            );
+
+            // ------------------------
+            // Seed BankAccount
+            // ------------------------
+            builder.Entity<BankAccount>().HasData(
+                new BankAccount
+                {
+                    Id = 1,
+                    BankName = "Demo Bank",
+                    AccountNumber = "DE12345678900000000001",
+                    Balance = 1500,
+                    UserId = demoUser.Id
+                }
+            );
+
+            // ------------------------
+            // Seed Transactions (FK: BankAccountId, CategoryId)
+            // ------------------------
+            builder.Entity<Transaction>().HasData(
+                new Transaction
+                {
+                    Id = 1,
+                    BankAccountId = 1,
+                    Amount = 75.00m,
+                    Currency = "USD",
+                    Date = new DateTime(2025, 05, 01),
+                    Description = "Grocery shopping",
+                    CategoryId = 1,
+                    Type = "Expense"
+                },
+                new Transaction
+                {
+                    Id = 2,
+                    BankAccountId = 1,
+                    Amount = 2500.00m,
+                    Currency = "USD",
+                    Date = new DateTime(2025, 04, 20),
+                    Description = "Monthly salary",
+                    CategoryId = 5,
+                    Type = "Income"
+                }
+            );
+
+            // ------------------------
+            // Seed Budgets (FK: UserId, CategoryId)
+            // ------------------------
+            builder.Entity<Budget>().HasData(
+                new Budget
+                {
+                    Id = 1,
+                    UserId = demoUser.Id,
+                    CategoryId = 1,
+                    LimitAmount = 500.00m
+                },
+                new Budget
+                {
+                    Id = 2,
+                    UserId = demoUser.Id,
+                    CategoryId = 2,
+                    LimitAmount = 200.00m
+                }
+            );
+
+            // ------------------------
+            // Seed Reports (FK: UserId)
+            // ------------------------
+            builder.Entity<Report>().HasData(
+                new Report
+                {
+                    Id = 1,
+                    UserId = demoUser.Id,
+                    TotalIncome = 2500.00m,
+                    TotalExpenses = 75.00m,
+                    Month = "5"
+    
+                }
+            );
+
+            // ------------------------
+            // Configure Decimal Precision
+            // ------------------------
+            builder.Entity<Budget>()
+                .Property(b => b.LimitAmount)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Transaction>()
+                .Property(t => t.Amount)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Report>()
+                .Property(r => r.TotalIncome)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Report>()
+                .Property(r => r.TotalExpenses)
+                .HasPrecision(18, 2);
+
+            // ------------------------
+            // Fluent API Relationships
+            // ------------------------
             builder.Entity<BankAccount>()
                 .HasOne(b => b.User)
                 .WithMany(u => u.BankAccounts)
@@ -63,78 +188,6 @@ namespace FinTrack.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            // Seed data
-            SeedInitialData(builder);
-        }
-
-        private void SeedInitialData(ModelBuilder builder)
-        {
-            // Default Categories
-            builder.Entity<Category>().HasData(
-                new Category { Id = 1, Name = "Groceries", ColorHex = "#FFB74D" },
-                new Category { Id = 2, Name = "Utilities", ColorHex = "#4FC3F7" },
-                new Category { Id = 3, Name = "Entertainment", ColorHex = "#BA68C8" },
-                new Category { Id = 4, Name = "Transportation", ColorHex = "#81C784" },
-                new Category { Id = 5, Name = "Salary", ColorHex = "#FFD54F" }
-            );
-
-            // Default Test User (optional)
-            var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<ApplicationUser>();
-            var testUser = new ApplicationUser
-            {
-                Id = "seed-user-001",
-                UserName = "demo@fintrack.com",
-                NormalizedUserName = "DEMO@FINTRACK.COM",
-                Email = "demo@fintrack.com",
-                NormalizedEmail = "DEMO@FINTRACK.COM",
-                EmailConfirmed = true,
-                FirstName = "Demo",
-                LastName = "User",
-                PreferredCurrency = "USD",
-                MonthlyIncome = 3000
-            };
-            testUser.PasswordHash = hasher.HashPassword(testUser, "Demo123!");
-
-            builder.Entity<ApplicationUser>().HasData(testUser);
-
-            // Default Bank Account for demo user
-            builder.Entity<BankAccount>().HasData(
-                new BankAccount
-                {
-                    Id = 1,
-                    BankName = "Demo Bank",
-                    AccountNumber = "DE12345678900000000001",
-                    Balance = 1500,
-                    UserId = testUser.Id
-                }
-            );
-
-            // Default Transactions
-            builder.Entity<Transaction>().HasData(
-                new Transaction
-                {
-                    Id = 1,
-                    BankAccountId = 1,
-                    Amount = 75,
-                    Currency = "USD",
-                    Date = DateTime.UtcNow.AddDays(-5),
-                    Description = "Grocery shopping",
-                    CategoryId = 1,
-                    Type = "Expense"
-                },
-                new Transaction
-                {
-                    Id = 2,
-                    BankAccountId = 1,
-                    Amount = 2500,
-                    Currency = "USD",
-                    Date = DateTime.UtcNow.AddDays(-10),
-                    Description = "Monthly salary",
-                    CategoryId = 5,
-                    Type = "Income"
-                }
-            );
         }
     }
 }
