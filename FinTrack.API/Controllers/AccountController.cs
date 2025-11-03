@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TaskFlow.Utility.Service;
 
 namespace FinTrack.API.Controllers
 {
-    [Route("api/account")]
+    [Route("api/[controller]")]
     [ApiController]
     public class AccountController : ControllerBase
     {
@@ -33,15 +34,12 @@ namespace FinTrack.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto model)
         {
-            // Validate the incoming model
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Check if the email is already registered
             if (await _userManager.FindByEmailAsync(model.Email) != null)
                 return BadRequest(new { message = "Email already in use." });
 
-            // Create a new ApplicationUser instance
             var user = new ApplicationUser
             {
                 UserName = model.Email,
@@ -52,14 +50,12 @@ namespace FinTrack.API.Controllers
                 MonthlyIncome = model.MonthlyIncome
             };
 
-            // Create the user with the specified password
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
 
-            await _userManager.AddToRoleAsync(user, "User"); // default role
+            await _userManager.AddToRoleAsync(user, "User");
 
-            // Generate email confirmation token and send confirmation email
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmLink = Url.Action(
                 "confirm-email",
@@ -134,10 +130,18 @@ namespace FinTrack.API.Controllers
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var resetLink = Url.Action("reset-password", "account", new { token, email = user.Email }, Request.Scheme);
 
+            var emailBody = $@"
+                <h3>Hello {user.FirstName},</h3>
+                <p>You can reset your <strong>FinTrack</strong> password by clicking the link below:</p>
+                <p><a href='{resetLink}' 
+                      style='color:#007bff;text-decoration:none;font-weight:bold;'>Reset your password</a></p>
+                <p>If you didn’t request this, please ignore this email.</p>
+            ";
+
             await _emailService.SendEmailAsync(
                 user.Email,
                 "Reset your FinTrack password",
-                $"Click <a href='{resetLink}'>here</a> to reset your password."
+                emailBody
             );
 
             return Ok(new { message = "If your email is registered, a reset link has been sent." });
@@ -158,11 +162,13 @@ namespace FinTrack.API.Controllers
             return Ok(new { message = "Password has been reset successfully." });
         }
 
-        [Authorize]
+        
         [HttpGet("me")]
+        [Authorize(Roles = "Admin,Manager,User")]
         public async Task<IActionResult> GetCurrentUser()
         {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type.Contains("nameidentifier"))?.Value;
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //var userId = "e650f77b-f9b3-41c2-b833-500e35dd2c1b";
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             var user = await _userManager.FindByIdAsync(userId);
