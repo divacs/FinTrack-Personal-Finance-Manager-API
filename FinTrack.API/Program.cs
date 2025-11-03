@@ -1,6 +1,7 @@
-using BarberBookingAPI.Service;
+using FinTrack.API.Service;
 using FinTrack.API.Utility.Seeders;
 using FinTrack.Application.Interfaces;
+using FinTrack.Application.Services;
 using FinTrack.Domain.Entities;
 using FinTrack.Infrastructure.Data;
 using FinTrack.Infrastructure.Repositories;
@@ -9,45 +10,73 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using TaskFlow.Utility.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ============================================
+// Add services to the container
+// ============================================
 builder.Services.AddControllers();
 
-// DbContext
+// ============================================
+// Configure Database (EF Core + SQL Server)
+// ============================================
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Identity
+// ============================================
+// 3??  Configure Identity
+// ============================================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// JWT Authentication
-var jwtSettings = builder.Configuration.GetSection("JWT");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SigningKey"]))
-        };
-    });
+// ============================================
+// Clear default claim mapping
+//     (this MUST come BEFORE AddJwtBearer)
+// ============================================
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-// Register Services
+// ============================================
+// JWT Authentication configuration
+// ============================================
+var jwtSettings = builder.Configuration.GetSection("JWT");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings["SigningKey"]))
+    };
+});
+
+// ============================================
+// Register custom application services
+// ============================================
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IBankAccountRepository, BankAccountRepository>();
 
-// Swagger with JWT support
+// ============================================
+//  Swagger + JWT Authentication support
+// ============================================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -58,7 +87,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API documentation for FinTrack system"
     });
 
-    // Add JWT Auth to Swagger
+    // JWT Authorization config
     var securityScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -96,7 +125,9 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Seed Roles & Users
+// ============================================
+//  Seed Roles & Users
+// ============================================
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -107,7 +138,9 @@ using (var scope = app.Services.CreateScope())
     await UserSeeder.SeedUsers(userManager);
 }
 
-// Configure the HTTP request pipeline.
+// ============================================
+//  Configure middleware pipeline
+// ============================================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -116,7 +149,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
+// Order is important
+app.UseAuthentication();  // must come before Authorization
 app.UseAuthorization();
 
 app.MapControllers();
