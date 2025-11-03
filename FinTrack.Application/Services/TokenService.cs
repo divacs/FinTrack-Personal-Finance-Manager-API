@@ -7,7 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using TaskFlow.Utility.Service;
 
-namespace BarberBookingAPI.Service
+namespace FinTrack.API.Service
 {
     public class TokenService : ITokenService
     {
@@ -27,6 +27,7 @@ namespace BarberBookingAPI.Service
             {
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty), // Email claim for the user
                 new Claim(JwtRegisteredClaimNames.GivenName, user.UserName),  // Username claim for the user
+                new Claim(ClaimTypes.NameIdentifier, user.Id) // Adding claim for user ID
 
             };
             // adding roles clame to the jwt token
