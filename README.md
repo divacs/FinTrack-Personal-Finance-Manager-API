@@ -28,14 +28,11 @@ FinTrack.Infrastructure→ Repositories, EF Core, seeders, database
 FinTrack.API           → Controllers, authentication, dependency injection
 ```
 
-📊 **Architecture Diagram**
-![Architecture Diagram](assets/architecture-diagram.png)
 
 ---
 
 ## 🧾 Entity Relationship Diagram (ERD)
 
-![ERD Diagram](assets/diagram-erd.png)
 
 **Entities:**
 - `ApplicationUser` → extends `IdentityUser`
