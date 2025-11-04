@@ -70,7 +70,7 @@ namespace FinTrack.Infrastructure.Repositories
             {
                 UserId = userId,
                 GeneratedAt = DateTime.UtcNow,
-                Month = $"{year}-All", // ili null, zavisi kako želiš
+                Month = "All", // or null
                 TotalIncome = totalIncome,
                 TotalExpenses = totalExpenses
             };
