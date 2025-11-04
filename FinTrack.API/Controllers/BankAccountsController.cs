@@ -9,7 +9,7 @@ namespace FinTrack.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // svi endpointi zahtevaju prijavu
+    [Authorize] // all endpoints requires authorization
     public class BankAccountsController : ControllerBase
     {
         private readonly IBankAccountRepository _repository;
@@ -104,9 +104,13 @@ namespace FinTrack.API.Controllers
         [Authorize(Roles = "Admin,Manager,User")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateBankAccountDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            var userId = GetUserId();
+            // If it is Admin or Manager, they can change any account
+            // If it is a regular user, they can only change their own
+            string? userId = IsAdmin() || IsManager() ? null : GetUserId();
+
             var entity = new BankAccount
             {
                 Id = id,
@@ -116,11 +120,9 @@ namespace FinTrack.API.Controllers
                 Balance = dto.Balance
             };
 
-            // Admin and Manager can update any account
-            if (IsAdmin() || IsManager()) entity.UserId = null!;
-
             var updated = await _repository.UpdateAsync(entity);
-            if (updated == null) return NotFound();
+            if (updated == null)
+                return NotFound();
 
             var result = new GetBankAccountDto
             {
@@ -132,6 +134,7 @@ namespace FinTrack.API.Controllers
 
             return Ok(result);
         }
+
 
         // DELETE /api/bankaccounts/{id}
         // All roles can delete their own accounts, Admin and Manager can delete any account

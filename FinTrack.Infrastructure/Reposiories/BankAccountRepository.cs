@@ -45,9 +45,16 @@ namespace FinTrack.Infrastructure.Repositories
 
         public async Task<BankAccount?> UpdateAsync(BankAccount account)
         {
-            var existing = await _context.BankAccounts
-                .FirstOrDefaultAsync(b => b.Id == account.Id && (account.UserId == b.UserId));
+            IQueryable<BankAccount> query = _context.BankAccounts;
 
+            // If userId is not null then is regular user,filtering by userId is needed
+            // if is null then is Admin or Manager, filterning by userId is not needed
+            if (account.UserId != null)
+            {
+                query = query.Where(b => b.UserId == account.UserId);
+            }
+
+            var existing = await query.FirstOrDefaultAsync(b => b.Id == account.Id);
             if (existing == null) return null;
 
             existing.BankName = account.BankName;
@@ -57,6 +64,7 @@ namespace FinTrack.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return existing;
         }
+
 
         public async Task<bool> DeleteAsync(int id, string userId, bool allUsers = false)
         {
