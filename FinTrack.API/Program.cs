@@ -1,6 +1,7 @@
 using FinTrack.API.Service;
 using FinTrack.API.Utility.Seeders;
 using FinTrack.Application.Interfaces;
+using FinTrack.Application.Jobs;
 using FinTrack.Application.Services;
 using FinTrack.Domain.Entities;
 using FinTrack.Infrastructure.Data;
@@ -13,6 +14,7 @@ using Microsoft.OpenApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using TaskFlow.Utility.Service;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +30,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ============================================
-// 3??  Configure Identity
+// Configure Identity
 // ============================================
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -36,7 +38,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 
 // ============================================
 // Clear default claim mapping
-//     (this MUST come BEFORE AddJwtBearer)
+// (this MUST come BEFORE AddJwtBearer)
 // ============================================
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
@@ -72,15 +74,26 @@ builder.Services.AddAuthentication(options =>
 // ============================================
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+
 builder.Services.AddScoped<IBankAccountRepository, BankAccountRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IBudgetRepository, BudgetRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IReportJobLogRepository, ReportJobLogRepository>();
 
+builder.Services.AddScoped<ReportJob>();
 
 // ============================================
-//  Swagger + JWT Authentication support
+// Configure Hangfire
+// ============================================
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
+
+// ============================================
+// Swagger + JWT Authentication support
 // ============================================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -89,10 +102,10 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "FinTrack API",
         Version = "v1",
-        Description = "API documentation for FinTrack system"
+        Description = "API documentation for the FinTrack Personal Finance Management system."
     });
 
-    // JWT Authorization config
+    // JWT Authorization in Swagger
     var securityScheme = new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -131,7 +144,7 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // ============================================
-//  Seed Roles & Users
+// Seed Roles & Users
 // ============================================
 using (var scope = app.Services.CreateScope())
 {
@@ -144,7 +157,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ============================================
-//  Configure middleware pipeline
+// Configure middleware pipeline
 // ============================================
 if (app.Environment.IsDevelopment())
 {
@@ -152,10 +165,23 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Hangfire Dashboard
+app.UseHangfireDashboard("/hangfire");
+
+// Schedule recurring jobs
+RecurringJob.AddOrUpdate<ReportJob>(
+    "monthly-report-job",
+    job => job.SendMonthlyReportsAsync(),
+    Cron.Monthly);
+
+RecurringJob.AddOrUpdate<ReportJob>(
+    "yearly-report-job",
+    job => job.SendYearlyReportsAsync(),
+    Cron.Yearly);
+
 app.UseHttpsRedirection();
 
-// Order is important
-app.UseAuthentication();  // must come before Authorization
+app.UseAuthentication();  // Must come before Authorization
 app.UseAuthorization();
 
 app.MapControllers();

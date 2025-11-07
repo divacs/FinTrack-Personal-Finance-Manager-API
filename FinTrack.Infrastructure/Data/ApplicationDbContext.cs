@@ -8,8 +8,9 @@ namespace FinTrack.Infrastructure.Data
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-            : base(options)
+        
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
         }
 
@@ -18,6 +19,7 @@ namespace FinTrack.Infrastructure.Data
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<Budget> Budgets { get; set; } = null!;
         public DbSet<Report> Reports { get; set; } = null!;
+        public DbSet<ReportJobLogs> ReportJobLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
