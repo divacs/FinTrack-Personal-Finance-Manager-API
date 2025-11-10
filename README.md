@@ -28,11 +28,9 @@ FinTrack.Infrastructure→ Repositories, EF Core, seeders, database
 FinTrack.API           → Controllers, authentication, dependency injection
 ```
 
-
 ---
 
 ## 🧾 Entity Relationship Diagram (ERD)
-
 
 **Entities:**
 - `ApplicationUser` → extends `IdentityUser`
@@ -151,6 +149,41 @@ FinTrack.API           → Controllers, authentication, dependency injection
 
 ---
 
+## 🧪 Unit Testing
+
+All key functionalities are covered with **unit tests** in a separate project:
+
+```
+FinTrack.Test
+```
+
+### ✅ Covered Areas:
+- User authentication and account management
+- CRUD operations for bank accounts, transactions, categories, and budgets
+- Report generation and transaction filtering
+- Services and business logic in the `Application` layer
+
+### ⚙️ Tools:
+- **xUnit** → unit testing framework
+- **Moq** → mocking dependencies
+- **FluentAssertions** → expressive and readable assertions
+
+### 💡 Example Test:
+```csharp
+[Fact]
+public async Task CreateBankAccount_ShouldReturnBankAccount()
+{
+    var bankAccount = new BankAccount { Name = "Test Account", Balance = 1000 };
+    var result = await _bankAccountService.CreateAsync(bankAccount);
+    result.Should().NotBeNull();
+    result.Name.Should().Be("Test Account");
+}
+```
+
+📚 **Benefit:** Unit tests allow safe refactoring, reliable validation, and prevent regressions.
+
+---
+
 ## 🧠 Troubleshooting & Lessons Learned
 
 ### ❌ Problem:
@@ -215,7 +248,3 @@ https://localhost:5246/swagger
 
 **Sonja Divac**  
 💼 [[LinkedIn Profile](https://www.linkedin.com/in/sonja-divac/)]  
-
----
-
-
