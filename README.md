@@ -247,4 +247,4 @@ https://localhost:5246/swagger
 ## 👩‍💻 Author
 
 **Sonja Divac**  
-💼 [[LinkedIn Profile](https://www.linkedin.com/in/sonja-divac/)]  
+💼 [[Sonja Divac -> linkedin](https://www.linkedin.com/in/sonja-divac/)]  
