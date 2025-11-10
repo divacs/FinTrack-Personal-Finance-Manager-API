@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.Infrastructure", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.API", "FinTrack.API\FinTrack.API.csproj", "{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTrack.Tests", "FinTrack.Tests\FinTrack.Tests.csproj", "{2B17034F-4ED1-C93A-77AF-8A06F29D4730}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4B1E891-543C-4C6E-8C7A-18EACBE801C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B17034F-4ED1-C93A-77AF-8A06F29D4730}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B17034F-4ED1-C93A-77AF-8A06F29D4730}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B17034F-4ED1-C93A-77AF-8A06F29D4730}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B17034F-4ED1-C93A-77AF-8A06F29D4730}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
