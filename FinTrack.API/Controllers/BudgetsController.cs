@@ -13,10 +13,12 @@ namespace FinTrack.API.Controllers
     public class BudgetsController : ControllerBase
     {
         private readonly IBudgetRepository _repository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public BudgetsController(IBudgetRepository repository)
+        public BudgetsController(IBudgetRepository repository, ICategoryRepository categoryRepository)
         {
             _repository = repository;
+            _categoryRepository = categoryRepository;
         }
 
         private string GetUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
@@ -48,6 +50,9 @@ namespace FinTrack.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            if (await _categoryRepository.GetByIdAsync(dto.CategoryId) == null)
+                return NotFound(new { message = "Category not found." });
+
             var budget = new Budget
             {
                 UserId = GetUserId(),
@@ -67,6 +72,9 @@ namespace FinTrack.API.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] UpdateBudgetDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            if (await _categoryRepository.GetByIdAsync(dto.CategoryId) == null)
+                return NotFound(new { message = "Category not found." });
 
             var budget = new Budget
             {

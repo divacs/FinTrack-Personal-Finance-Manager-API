@@ -14,11 +14,16 @@ namespace FinTrack.API.Controllers
     {
         private readonly ITransactionRepository _repository;
         private readonly IBankAccountRepository _bankAccountRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public TransactionsController(ITransactionRepository repository, IBankAccountRepository bankAccountRepository)
+        public TransactionsController(
+            ITransactionRepository repository,
+            IBankAccountRepository bankAccountRepository,
+            ICategoryRepository categoryRepository)
         {
             _repository = repository;
             _bankAccountRepository = bankAccountRepository;
+            _categoryRepository = categoryRepository;
         }
 
         private string GetUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
@@ -89,6 +94,9 @@ namespace FinTrack.API.Controllers
             var bankAccount = await _bankAccountRepository.GetByIdAsync(dto.BankAccountId, userId, allUsers);
             if (bankAccount == null) return NotFound();
 
+            if (dto.CategoryId.HasValue && await _categoryRepository.GetByIdAsync(dto.CategoryId.Value) == null)
+                return NotFound(new { message = "Category not found." });
+
             var entity = new Transaction
             {
                 BankAccountId = dto.BankAccountId,
@@ -127,6 +135,9 @@ namespace FinTrack.API.Controllers
 
             var userId = GetUserId();
             bool allUsers = IsAdmin() || IsManager();
+
+            if (dto.CategoryId.HasValue && await _categoryRepository.GetByIdAsync(dto.CategoryId.Value) == null)
+                return NotFound(new { message = "Category not found." });
 
             var entity = new Transaction
             {
