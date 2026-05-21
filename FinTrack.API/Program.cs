@@ -15,6 +15,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using TaskFlow.Utility.Service;
 using Hangfire;
+using Hangfire.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -165,8 +166,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseHttpsRedirection();
+
+app.UseAuthentication();  // Must come before Authorization
+app.UseAuthorization();
+
 // Hangfire Dashboard
-app.UseHangfireDashboard("/hangfire");
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAdminAuthorizationFilter() }
+});
 
 // Schedule recurring jobs
 RecurringJob.AddOrUpdate<ReportJob>(
@@ -179,11 +188,16 @@ RecurringJob.AddOrUpdate<ReportJob>(
     job => job.SendYearlyReportsAsync(),
     Cron.Yearly);
 
-app.UseHttpsRedirection();
-
-app.UseAuthentication();  // Must come before Authorization
-app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
+
+public class HangfireAdminAuthorizationFilter : IDashboardAuthorizationFilter
+{
+    public bool Authorize(DashboardContext context)
+    {
+        var httpContext = context.GetHttpContext();
+        return httpContext.User.Identity?.IsAuthenticated == true &&
+               httpContext.User.IsInRole("Admin");
+    }
+}
