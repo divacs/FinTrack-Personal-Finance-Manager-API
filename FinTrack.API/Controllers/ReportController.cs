@@ -24,6 +24,12 @@ namespace FinTrack.API.Controllers
         // Mnthly report for a given year and month
         public async Task<IActionResult> GetMonthly([FromQuery] int year, [FromQuery] int month)
         {
+            var yearError = ValidateYear(year);
+            if (yearError != null) return BadRequest(new { message = yearError });
+
+            if (month < 1 || month > 12)
+                return BadRequest(new { message = "Month must be between 1 and 12." });
+
             var report = await _repository.GenerateMonthlyReportAsync(GetUserId(), year, month);
 
             var result = new MonthlyReportDto
@@ -40,6 +46,9 @@ namespace FinTrack.API.Controllers
         // Yearly report for a given year
         public async Task<IActionResult> GetYearly([FromQuery] int year)
         {
+            var yearError = ValidateYear(year);
+            if (yearError != null) return BadRequest(new { message = yearError });
+
             var report = await _repository.GenerateYearlyReportAsync(GetUserId(), year);
 
             var result = new YearlyReportDto
@@ -50,6 +59,15 @@ namespace FinTrack.API.Controllers
             };
 
             return Ok(result);
+        }
+
+        private static string? ValidateYear(int year)
+        {
+            var maxYear = DateTime.UtcNow.Year + 1;
+            if (year < 1900 || year > maxYear)
+                return $"Year must be between 1900 and {maxYear}.";
+
+            return null;
         }
     }
 }
