@@ -13,10 +13,12 @@ namespace FinTrack.API.Controllers
     public class TransactionsController : ControllerBase
     {
         private readonly ITransactionRepository _repository;
+        private readonly IBankAccountRepository _bankAccountRepository;
 
-        public TransactionsController(ITransactionRepository repository)
+        public TransactionsController(ITransactionRepository repository, IBankAccountRepository bankAccountRepository)
         {
             _repository = repository;
+            _bankAccountRepository = bankAccountRepository;
         }
 
         private string GetUserId() => User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
@@ -82,6 +84,11 @@ namespace FinTrack.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            var userId = GetUserId();
+            bool allUsers = IsAdmin() || IsManager();
+            var bankAccount = await _bankAccountRepository.GetByIdAsync(dto.BankAccountId, userId, allUsers);
+            if (bankAccount == null) return NotFound();
+
             var entity = new Transaction
             {
                 BankAccountId = dto.BankAccountId,
@@ -118,6 +125,9 @@ namespace FinTrack.API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            var userId = GetUserId();
+            bool allUsers = IsAdmin() || IsManager();
+
             var entity = new Transaction
             {
                 Id = id,
@@ -129,7 +139,7 @@ namespace FinTrack.API.Controllers
                 Type = dto.Type
             };
 
-            var updated = await _repository.UpdateAsync(entity);
+            var updated = await _repository.UpdateAsync(entity, userId, allUsers);
             if (updated == null) return NotFound();
 
             var result = new GetTransactionDto

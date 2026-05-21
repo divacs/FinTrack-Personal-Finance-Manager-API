@@ -46,9 +46,16 @@ namespace FinTrack.Infrastructure.Repositories
             return transaction;
         }
         // Update an existing transaction
-        public async Task<Transaction?> UpdateAsync(Transaction transaction)
+        public async Task<Transaction?> UpdateAsync(Transaction transaction, string userId, bool allUsers)
         {
-            var existing = await _context.Transactions.FindAsync(transaction.Id);
+            var query = _context.Transactions.Include(t => t.BankAccount)
+                                             .Include(t => t.Category)
+                                             .AsQueryable();
+
+            if (!allUsers)
+                query = query.Where(t => t.BankAccount.UserId == userId);
+
+            var existing = await query.FirstOrDefaultAsync(t => t.Id == transaction.Id);
             if (existing == null) return null;
 
             existing.Amount = transaction.Amount;
