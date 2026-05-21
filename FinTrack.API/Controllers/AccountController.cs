@@ -18,17 +18,20 @@ namespace FinTrack.API.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailService _emailService;
         private readonly ITokenService _tokenService;
+        private readonly ILogger<AccountController> _logger;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
             IEmailService emailService,
-            ITokenService tokenService)
+            ITokenService tokenService,
+            ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailService = emailService;
             _tokenService = tokenService;
+            _logger = logger;
         }
 
         [HttpPost("register")]
@@ -63,11 +66,29 @@ namespace FinTrack.API.Controllers
                 new { userId = user.Id, token },
                 Request.Scheme);
 
-            await _emailService.SendEmailAsync(
-                user.Email,
-                "Confirm your FinTrack account",
-                $"Hello {user.FirstName}, please confirm your account by clicking <a href='{confirmLink}'>here</a>."
-            );
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    model.Email,
+                    "Confirm your FinTrack account",
+                    $"Hello {user.FirstName}, please confirm your account by clicking <a href='{confirmLink}'>here</a>."
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send registration confirmation email for user {UserId}.", user.Id);
+
+                var deleteResult = await _userManager.DeleteAsync(user);
+                if (!deleteResult.Succeeded)
+                {
+                    _logger.LogError("Failed to rollback user {UserId} after registration email failure. Errors: {Errors}",
+                        user.Id,
+                        string.Join(", ", deleteResult.Errors.Select(e => e.Code)));
+                }
+
+                return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                    new { message = "Registration could not be completed right now. Please try again later." });
+            }
 
             return Ok(new { message = "Registration successful. Check your email to confirm your account." });
         }
@@ -138,11 +159,20 @@ namespace FinTrack.API.Controllers
                 <p>If you didn’t request this, please ignore this email.</p>
             ";
 
-            await _emailService.SendEmailAsync(
-                user.Email,
-                "Reset your FinTrack password",
-                emailBody
-            );
+            try
+            {
+                await _emailService.SendEmailAsync(
+                    model.Email,
+                    "Reset your FinTrack password",
+                    emailBody
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send password reset email for user {UserId}.", user.Id);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                    new { message = "Password reset email could not be sent right now. Please try again later." });
+            }
 
             return Ok(new { message = "If your email is registered, a reset link has been sent." });
         }
