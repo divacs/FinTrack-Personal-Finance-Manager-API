@@ -41,10 +41,6 @@ namespace FinTrack.Infrastructure.Repositories
                 TotalExpenses = totalExpenses
             };
 
-            // Optionally save report in DB
-            _context.Reports.Add(report);
-            await _context.SaveChangesAsync();
-
             return report;
         }
 
@@ -74,9 +70,6 @@ namespace FinTrack.Infrastructure.Repositories
                 TotalIncome = totalIncome,
                 TotalExpenses = totalExpenses
             };
-
-            _context.Reports.Add(report);
-            await _context.SaveChangesAsync();
 
             return report;
         }
