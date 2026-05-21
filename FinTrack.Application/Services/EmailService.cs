@@ -25,12 +25,6 @@ namespace FinTrack.Application.Services
 
             using var smtp = new SmtpClient();
 
-            // TEMPORARY: Disable SSL certificate validation (ONLY FOR TESTING)
-            // DO NOT USE THIS IN PRODUCTION - it bypasses important security checks
-            smtp.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
-            //
-            // // END TEMPORARY: Disable SSL certificate validation
-
             // Connect to the SMTP server using the settings from configuration
             await smtp.ConnectAsync(
                 _configuration["EmailSettings:SmtpServer"] ?? throw new ArgumentNullException("EmailSettings:SmtpServer"),

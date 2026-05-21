@@ -19,14 +19,14 @@ namespace FinTrack.API.Service
         {
             _config = config;
             _userManager = userManager;
-            _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:SigningKey"]));
+            _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["JWT:SigningKey"]!));
         }
         public async Task<string> CreateTokenAsync(ApplicationUser user)
         {
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty), // Email claim for the user
-                new Claim(JwtRegisteredClaimNames.GivenName, user.UserName),  // Username claim for the user
+                new Claim(JwtRegisteredClaimNames.GivenName, user.UserName ?? string.Empty),  // Username claim for the user
                 new Claim(ClaimTypes.NameIdentifier, user.Id) // Adding claim for user ID
 
             };

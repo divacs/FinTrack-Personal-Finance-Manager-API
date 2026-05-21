@@ -19,6 +19,8 @@ using Hangfire.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
+ConfigurationValidator.Validate(builder.Configuration);
+
 // ============================================
 // Add services to the container
 // ============================================
@@ -47,6 +49,9 @@ JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 // JWT Authentication configuration
 // ============================================
 var jwtSettings = builder.Configuration.GetSection("JWT");
+var jwtIssuer = jwtSettings["Issuer"]!;
+var jwtAudience = jwtSettings["Audience"]!;
+var jwtSigningKey = jwtSettings["SigningKey"]!;
 
 builder.Services.AddAuthentication(options =>
 {
@@ -63,10 +68,10 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtSettings["SigningKey"]))
+            Encoding.UTF8.GetBytes(jwtSigningKey))
     };
 });
 
@@ -203,5 +208,64 @@ public class HangfireAdminAuthorizationFilter : IDashboardAuthorizationFilter
         var httpContext = context.GetHttpContext();
         return httpContext.User.Identity?.IsAuthenticated == true &&
                httpContext.User.IsInRole("Admin");
+    }
+}
+
+public static class ConfigurationValidator
+{
+    private const int MinJwtSigningKeyLength = 32;
+    private static readonly HashSet<string> PlaceholderValues = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "key",
+        "secret",
+        "signingkey",
+        "issuer",
+        "audience",
+        "password",
+        "changeme",
+        "change-me",
+        "email@gmail.com",
+        "bla bla bla bla"
+    };
+
+    public static void Validate(IConfiguration configuration)
+    {
+        var jwtSigningKey = GetRequiredValue(configuration, "JWT:SigningKey");
+        var jwtIssuer = GetRequiredValue(configuration, "JWT:Issuer");
+        var jwtAudience = GetRequiredValue(configuration, "JWT:Audience");
+
+        if (jwtSigningKey.Length < MinJwtSigningKeyLength)
+            throw new InvalidOperationException($"Configuration value 'JWT:SigningKey' must be at least {MinJwtSigningKeyLength} characters long.");
+
+        RejectPlaceholder("JWT:SigningKey", jwtSigningKey);
+        RejectPlaceholder("JWT:Issuer", jwtIssuer);
+        RejectPlaceholder("JWT:Audience", jwtAudience);
+
+        var smtpServer = GetRequiredValue(configuration, "EmailSettings:SmtpServer");
+        var smtpUsername = GetRequiredValue(configuration, "EmailSettings:Username");
+        var smtpPassword = GetRequiredValue(configuration, "EmailSettings:Password");
+
+        RejectPlaceholder("EmailSettings:SmtpServer", smtpServer);
+        RejectPlaceholder("EmailSettings:Username", smtpUsername);
+        RejectPlaceholder("EmailSettings:Password", smtpPassword);
+
+        var smtpPortValue = GetRequiredValue(configuration, "EmailSettings:Port");
+        if (!int.TryParse(smtpPortValue, out var smtpPort) || smtpPort < 1 || smtpPort > 65535)
+            throw new InvalidOperationException("Configuration value 'EmailSettings:Port' must be a valid TCP port between 1 and 65535.");
+    }
+
+    private static string GetRequiredValue(IConfiguration configuration, string key)
+    {
+        var value = configuration[key];
+        if (string.IsNullOrWhiteSpace(value))
+            throw new InvalidOperationException($"Missing required configuration value '{key}'.");
+
+        return value;
+    }
+
+    private static void RejectPlaceholder(string key, string value)
+    {
+        if (PlaceholderValues.Contains(value.Trim()))
+            throw new InvalidOperationException($"Configuration value '{key}' must not use a placeholder/default value.");
     }
 }
