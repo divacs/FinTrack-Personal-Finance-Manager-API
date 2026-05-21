@@ -43,11 +43,18 @@ namespace FinTrack.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return existing;
         }
+        // Check whether category is used by budgets
+        public async Task<bool> HasBudgetsAsync(int id)
+        {
+            return await _context.Budgets.AnyAsync(b => b.CategoryId == id);
+        }
         // Delete category by id
         public async Task<bool> DeleteAsync(int id)
         {
             var category = await _context.Categories.FindAsync(id);
             if (category == null) return false;
+
+            if (await HasBudgetsAsync(id)) return false;
 
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();

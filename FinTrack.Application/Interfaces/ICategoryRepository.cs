@@ -8,6 +8,7 @@ namespace FinTrack.Application.Interfaces
         Task<Category?> GetByIdAsync(int id);
         Task<Category> AddAsync(Category category);
         Task<Category?> UpdateAsync(Category category);
+        Task<bool> HasBudgetsAsync(int id);
         Task<bool> DeleteAsync(int id);
     }
 }

@@ -183,7 +183,7 @@ namespace FinTrack.Infrastructure.Data
                 .HasOne(b => b.Category)
                 .WithMany(c => c.Budgets)
                 .HasForeignKey(b => b.CategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Report>()
                 .HasOne(r => r.User)

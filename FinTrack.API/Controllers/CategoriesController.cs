@@ -94,6 +94,12 @@ namespace FinTrack.API.Controllers
         // Delete a category - Admin only
         public async Task<IActionResult> Delete(int id)
         {
+            var category = await _repository.GetByIdAsync(id);
+            if (category == null) return NotFound();
+
+            if (await _repository.HasBudgetsAsync(id))
+                return Conflict(new { message = "Category cannot be deleted because it is used by one or more budgets." });
+
             var deleted = await _repository.DeleteAsync(id);
             if (!deleted) return NotFound();
 
