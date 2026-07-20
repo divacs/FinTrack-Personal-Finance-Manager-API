@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Ignore appsettings.Development.json because it contains sensitive data
 appsettings.Development.json
+
+# Local interview prep notes
+/docs-local/
