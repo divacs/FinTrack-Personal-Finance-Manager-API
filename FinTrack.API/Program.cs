@@ -181,10 +181,17 @@ app.UseAuthentication();  // Must come before Authorization
 app.UseAuthorization();
 
 // Hangfire Dashboard
-app.UseHangfireDashboard("/hangfire", new DashboardOptions
+if (app.Environment.IsDevelopment())
 {
-    Authorization = new[] { new HangfireAdminAuthorizationFilter() }
-});
+    app.UseHangfireDashboard("/hangfire");
+}
+else
+{
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new HangfireAdminAuthorizationFilter() }
+    });
+}
 
 // Schedule recurring jobs
 RecurringJob.AddOrUpdate<ReportJob>(

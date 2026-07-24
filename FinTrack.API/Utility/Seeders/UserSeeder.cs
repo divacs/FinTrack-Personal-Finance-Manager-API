@@ -8,69 +8,73 @@ namespace FinTrack.API.Utility.Seeders
     {
         public static async Task SeedUsers(UserManager<ApplicationUser> userManager)
         {
-            // --- ADMIN ---
-            string adminEmail = "admin@fintrack.com";
-            string adminPassword = "Admin123!";
-            if (await userManager.FindByEmailAsync(adminEmail) == null)
-            {
-                var adminUser = new ApplicationUser
+            await EnsureUserWithRoleAsync(
+                userManager,
+                email: "admin@fintrack.com",
+                password: "Admin123!",
+                roleName: "Admin",
+                userFactory: () => new ApplicationUser
                 {
                     UserName = "admin",
-                    Email = adminEmail,
+                    Email = "admin@fintrack.com",
                     FirstName = "System",
                     LastName = "Admin",
                     EmailConfirmed = true
-                };
+                });
 
-                var result = await userManager.CreateAsync(adminUser, adminPassword);
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(adminUser, "Admin");
-                }
-            }
-
-            // --- DEMO USER ---
-            string demoEmail = "demo@fintrack.com";
-            string demoPassword = "Demo123!";
-            if (await userManager.FindByEmailAsync(demoEmail) == null)
-            {
-                var demoUser = new ApplicationUser
+            await EnsureUserWithRoleAsync(
+                userManager,
+                email: "demo@fintrack.com",
+                password: "Demo123!",
+                roleName: "User",
+                userFactory: () => new ApplicationUser
                 {
                     UserName = "demo",
-                    Email = demoEmail,
+                    Email = "demo@fintrack.com",
                     FirstName = "Demo",
                     LastName = "User",
                     PreferredCurrency = "USD",
                     MonthlyIncome = 3000,
                     EmailConfirmed = true
-                };
+                });
 
-                var result = await userManager.CreateAsync(demoUser, demoPassword);
-                if (result.Succeeded)
-                {
-                    await userManager.AddToRoleAsync(demoUser, "User");
-                }
-            }
-
-            // --- OPTIONAL MANAGER ---
-            string managerEmail = "manager@fintrack.com";
-            string managerPassword = "Manager123!";
-            if (await userManager.FindByEmailAsync(managerEmail) == null)
-            {
-                var managerUser = new ApplicationUser
+            await EnsureUserWithRoleAsync(
+                userManager,
+                email: "manager@fintrack.com",
+                password: "Manager123!",
+                roleName: "Manager",
+                userFactory: () => new ApplicationUser
                 {
                     UserName = "manager",
-                    Email = managerEmail,
+                    Email = "manager@fintrack.com",
                     FirstName = "Manager",
                     LastName = "User",
                     EmailConfirmed = true
-                };
+                });
+        }
 
-                var result = await userManager.CreateAsync(managerUser, managerPassword);
-                if (result.Succeeded)
+        private static async Task EnsureUserWithRoleAsync(
+            UserManager<ApplicationUser> userManager,
+            string email,
+            string password,
+            string roleName,
+            Func<ApplicationUser> userFactory)
+        {
+            var user = await userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                user = userFactory();
+                var result = await userManager.CreateAsync(user, password);
+                if (!result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(managerUser, "Manager");
+                    return;
                 }
+            }
+
+            if (!await userManager.IsInRoleAsync(user, roleName))
+            {
+                await userManager.AddToRoleAsync(user, roleName);
             }
         }
     }
